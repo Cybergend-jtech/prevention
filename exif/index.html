@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PhotoScore — Testez vos talents de photographe !</title>
+  <!-- Librairie légère pour lire les métadonnées EXIF (JPEG, HEIC iPhone, etc.) 100% en local -->
+  <script src="https://cdn.jsdelivr.net/npm/exifr/dist/full.umd.js"></script>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: linear-gradient(160deg, #f0f4ff 0%, #e0e7ff 100%);
+      color: #1e293b;
+      min-height: 100dvh;
+      transition: background 0.4s ease, color 0.4s ease;
+    }
+
+    /* ==================== PHASE 1 : LE JEU "PHOTOSCORE" ==================== */
+    #game-view {
+      max-width: 540px;
+      margin: 0 auto;
+      padding: 24px 16px 40px 16px;
+      text-align: center;
+    }
+    .brand-pill {
+      display: inline-block;
+      background: #4f46e5;
+      color: #fff;
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      padding: 5px 14px;
+      border-radius: 999px;
+      margin-bottom: 14px;
+    }
+    .game-title {
+      font-size: clamp(1.6rem, 6vw, 2.2rem);
+      margin: 0 0 10px 0;
+      color: #0f172a;
+      line-height: 1.2;
+    }
+    .game-sub {
+      color: #475569;
+      font-size: 0.98rem;
+      margin: 0 0 24px 0;
+    }
+
+    .upload-card {
+      background: #ffffff;
+      border: 2px dashed #818cf8;
+      border-radius: 20px;
+      padding: 32px 20px;
+      box-shadow: 0 10px 30px rgba(79, 70, 229, 0.1);
+      margin-bottom: 18px;
+    }
+    .upload-icon {
+      font-size: 3.4rem;
+      margin-bottom: 10px;
+      display: block;
+    }
+    .upload-card h2 {
+      margin: 0 0 8px 0;
+      font-size: 1.15rem;
+      color: #1e1b4b;
+    }
+    .upload-card p {
+      margin: 0 0 20px 0;
+      font-size: 0.9rem;
+      color: #64748b;
+    }
+    .btn-upload {
+      display: inline-block;
+      background: linear-gradient(135deg, #4f46e5, #7c3aed);
+      color: #fff;
+      font-size: 1.05rem;
+      font-weight: 700;
+      padding: 15px 28px;
+      border-radius: 12px;
+      cursor: pointer;
+      border: none;
+      width: 100%;
+      max-width: 300px;
+      box-shadow: 0 6px 16px rgba(79, 70, 229, 0.3);
+      transition: transform 0.15s;
+    }
+    .btn-upload:active { transform: scale(0.97); }
+    #file-input { display: none; }
+
+    .badges-row {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 18px;
+      font-size: 0.8rem;
+      color: #6366f1;
+      font-weight: 600;
+    }
+    .badges-row span {
+      background: #eef2ff;
+      padding: 4px 10px;
+      border-radius: 8px;
+    }
+
+    .btn-demo {
+      background: transparent;
+      border: 1px solid #94a3b8;
+      color: #475569;
+      padding: 10px 18px;
+      border-radius: 10px;
+      font-size: 0.88rem;
+      cursor: pointer;
+      margin-top: 6px;
+    }
+    .btn-demo:hover { background: rgba(255,255,255,0.6); color: #0f172a; }
+
+    /* ==================== PHASE INTERMÉDIAIRE : SCAN ==================== */
+    #loading-view {
+      display: none;
+      max-width: 480px;
+      margin: 0 auto;
+      padding: 80px 20px;
+      text-align: center;
+    }
+    .spinner {
+      width: 56px;
+      height: 56px;
+      border: 5px solid #c7d2fe;
+      border-top-color: #4f46e5;
+      border-radius: 50%;
+      animation: spin 0.9s linear infinite;
+      margin: 0 auto 20px auto;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    #loading-text {
+      font-size: 1.05rem;
+      font-weight: 600;
+      color: #312e81;
+    }
+
+    /* ==================== PHASE 2 : LA RÉVÉLATION ==================== */
+    body.revealed {
+      background: #0b1120;
+      color: #e2e8f0;
+    }
+    #reveal-view {
+      display: none;
+      max-width: 780px;
+      margin: 0 auto;
+      padding: 20px 16px 50px 16px;
+      animation: fadeIn 0.45s ease;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .twist-banner {
+      background: linear-gradient(135deg, #b91c1c, #ea580c);
+      color: #fff;
+      border-radius: 16px;
+      padding: 22px 18px;
+      text-align: center;
+      margin-bottom: 18px;
+      box-shadow: 0 8px 24px rgba(220, 38, 38, 0.3);
+    }
+    .twist-banner.safe {
+      background: linear-gradient(135deg, #047857, #0d9488);
+      box-shadow: 0 8px 24px rgba(13, 148, 136, 0.25);
+    }
+    .twist-pill {
+      display: inline-block;
+      background: rgba(0,0,0,0.28);
+      padding: 4px 12px;
+      border-radius: 999px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+    .twist-banner h1 {
+      margin: 0 0 8px 0;
+      font-size: clamp(1.35rem, 5vw, 1.85rem);
+    }
+    .twist-banner p { margin: 0; font-size: 0.94rem; opacity: 0.95; }
+
+    .rgpd-note {
+      background: #1e293b;
+      border-left: 4px solid #38bdf8;
+      border-radius: 10px;
+      padding: 14px 16px;
+      margin-bottom: 20px;
+      font-size: 0.9rem;
+    }
+    .rgpd-note strong { color: #38bdf8; }
+
+    .preview-box {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .preview-box img {
+      max-height: 220px;
+      max-width: 100%;
+      border-radius: 12px;
+      border: 2px solid #334155;
+      object-fit: contain;
+    }
+
+    .card {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 14px;
+      padding: 18px;
+      margin-bottom: 16px;
+    }
+    .card h2 {
+      margin: 0 0 12px 0;
+      font-size: 1.05rem;
+      color: #f8fafc;
+      border-bottom: 1px solid #334155;
+      padding-bottom: 8px;
+    }
+    .info-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 7px 0;
+      border-bottom: 1px dashed rgba(148,163,184,0.2);
+      font-size: 0.92rem;
+    }
+    .info-row:last-child { border-bottom: none; }
+    .info-label { color: #94a3b8; }
+    .info-val { color: #f8fafc; font-weight: 600; text-align: right; word-break: break-word; }
+    .info-val.danger { color: #f87171; }
+    .info-val.ok { color: #4ade80; }
+
+    .map-frame {
+      width: 100%;
+      height: 240px;
+      border: 0;
+      border-radius: 10px;
+      margin-top: 12px;
+    }
+    .map-link {
+      display: inline-block;
+      margin-top: 10px;
+      color: #38bdf8;
+      font-size: 0.88rem;
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    .tips-card {
+      background: #0f172a;
+      border: 1px solid #22c55e;
+      border-radius: 14px;
+      padding: 18px;
+      margin-bottom: 20px;
+    }
+    .tips-card h2 {
+      margin: 0 0 10px 0;
+      font-size: 1.05rem;
+      color: #4ade80;
+    }
+    .tips-card ul {
+      margin: 0;
+      padding-left: 20px;
+      font-size: 0.9rem;
+    }
+    .tips-card li { margin-bottom: 8px; color: #cbd5e1; }
+
+    .actions-row {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    .btn-action {
+      background: #3b82f6;
+      color: #fff;
+      border: none;
+      padding: 12px 22px;
+      border-radius: 10px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .btn-action.secondary {
+      background: transparent;
+      border: 1px solid #475569;
+      color: #cbd5e1;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ==================== PHASE 1 : LE JEU ==================== -->
+  <div id="game-view">
+    <div class="brand-pill">✨ Mini-Jeu Photo</div>
+    <h1 class="game-title">Quel est votre score de photographe ?</h1>
+    <p class="game-sub">Choisissez une photo de votre galerie et découvrez instantanément sa note sur 100 (cadrage, lumière, netteté).</p>
+
+    <div class="upload-card">
+      <span class="upload-icon">📸</span>
+      <h2>Sélectionnez un cliché à évaluer</h2>
+      <p>Paysage, vacances, animal ou objet du quotidien : testez votre meilleur cliché !</p>
+      <label for="file-input" class="btn-upload">Choisir une photo</label>
+      <input type="file" id="file-input" accept="image/*">
+      <div class="badges-row">
+        <span>⚡ Analyse instantanée</span>
+        <span>🔒 100 % sur votre téléphone</span>
+      </div>
+    </div>
+
+    <button class="btn-demo" id="btn-demo">🎭 Pas de photo sous la main ? Tester avec un exemple</button>
+  </div>
+
+  <!-- ==================== PHASE INTERMÉDIAIRE ==================== -->
+  <div id="loading-view">
+    <div class="spinner"></div>
+    <div id="loading-text">Analyse du cadrage et de la lumière...</div>
+  </div>
+
+  <!-- ==================== PHASE 2 : LA RÉVÉLATION ==================== -->
+  <div id="reveal-view">
+    <div class="twist-banner" id="twist-banner">
+      <div class="twist-pill">🕵️‍♂️ Atelier de prévention numérique</div>
+      <h1 id="twist-title">Note : 100 %... en partage d'infos cachées !</h1>
+      <p id="twist-sub">Une simple photo contient souvent une véritable carte d'identité invisible : les métadonnées EXIF.</p>
+    </div>
+
+    <div class="rgpd-note">
+      <strong>Rassurez-vous :</strong> votre photo n'a <strong>jamais quitté votre téléphone</strong> et n'a été envoyée sur aucun serveur. En revanche, si vous l'envoyez par e-mail ou sur un site de petites annonces, voici ce qu'un inconnu peut lire en 1 clic :
+    </div>
+
+    <div class="preview-box" id="preview-box" style="display:none;">
+      <img id="preview-img" alt="Aperçu de la photo">
+    </div>
+
+    <!-- CARTE GPS -->
+    <div class="card" id="gps-card">
+      <h2>📍 Localisation GPS cachée dans la photo</h2>
+      <div id="gps-content"></div>
+    </div>
+
+    <!-- CARTE APPAREIL & DATE -->
+    <div class="card">
+      <h2>📱 Empreinte de l'appareil & Horodatage</h2>
+      <div class="info-row">
+        <span class="info-label">Appareil / Modèle</span>
+        <span class="info-val" id="val-device">--</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Date & heure de prise de vue</span>
+        <span class="info-val" id="val-date">--</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Logiciel / Système</span>
+        <span class="info-val" id="val-soft">--</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Réglages (ISO / Ouverture)</span>
+        <span class="info-val" id="val-cam">--</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Fichier & Taille</span>
+        <span class="info-val" id="val-file">--</span>
+      </div>
+    </div>
+
+    <!-- CONSEILS -->
+    <div class="tips-card">
+      <h2>🛡️ Les bons réflexes avant de partager une photo</h2>
+      <ul>
+        <li><strong>Coupez la géolocalisation de l'appareil photo :</strong> dans les réglages de votre smartphone (Confidentialité > Localisation > Appareil photo > Jamais).</li>
+        <li><strong>Attention aux petites annonces et e-mails :</strong> si les réseaux sociaux (WhatsApp, Instagram) nettoient souvent les données GPS, un envoi par e-mail, forum ou site d'annonces peut révéler votre adresse exacte.</li>
+        <li><strong>Astuce express :</strong> faire une simple <em>capture d'écran</em> de sa photo avant de l'envoyer supprime automatiquement les métadonnées d'origine.</li>
+      </ul>
+    </div>
+
+    <div class="actions-row">
+      <button class="btn-action" id="btn-retry">📸 Tester une autre photo</button>
+      <button class="btn-action secondary" id="btn-demo-2" style="display:none;">🗺️ Voir un exemple avec GPS</button>
+    </div>
+  </div>
+
+  <script>
+    const fileInput = document.getElementById('file-input');
+    const gameView = document.getElementById('game-view');
+    const loadingView = document.getElementById('loading-view');
+    const revealView = document.getElementById('reveal-view');
+    const loadingText = document.getElementById('loading-text');
+
+    function showLoading(callback) {
+      gameView.style.display = 'none';
+      revealView.style.display = 'none';
+      document.body.classList.remove('revealed');
+      loadingView.style.display = 'block';
+      loadingText.textContent = "Analyse du cadrage et de la lumière...";
+      setTimeout(() => {
+        loadingText.textContent = "Extraction des données invisibles...";
+      }, 750);
+      setTimeout(() => {
+        loadingView.style.display = 'none';
+        document.body.classList.add('revealed');
+        revealView.style.display = 'block';
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        callback();
+      }, 1500);
+    }
+
+    function formatDate(d) {
+      if (!d) return "Non renseignée";
+      if (d instanceof Date && !isNaN(d)) {
+        return d.toLocaleDateString('fr-FR') + " à " + d.toLocaleTimeString('fr-FR');
+      }
+      return String(d);
+    }
+
+    function renderResult({ imgUrl, device, dateStr, software, camStr, fileStr, lat, lon, isDemo }) {
+      const previewBox = document.getElementById('preview-box');
+      const previewImg = document.getElementById('preview-img');
+      if (imgUrl) {
+        previewImg.src = imgUrl;
+        previewBox.style.display = 'block';
+      } else {
+        previewBox.style.display = 'none';
+      }
+
+      document.getElementById('val-device').textContent = device || "Non détecté (nettoyé)";
+      document.getElementById('val-date').textContent = dateStr || "Non renseignée";
+      document.getElementById('val-soft').textContent = software || "Non renseigné";
+      document.getElementById('val-cam').textContent = camStr || "Non renseigné";
+      document.getElementById('val-file').textContent = fileStr || "--";
+
+      const banner = document.getElementById('twist-banner');
+      const title = document.getElementById('twist-title');
+      const sub = document.getElementById('twist-sub');
+      const gpsContent = document.getElementById('gps-content');
+      const btnDemo2 = document.getElementById('btn-demo-2');
+
+      if (typeof lat === 'number' && typeof lon === 'number' && !isNaN(lat) && !isNaN(lon)) {
+        banner.classList.remove('safe');
+        title.textContent = isDemo
+          ? "Exemple : cette photo révèle son lieu exact !"
+          : "Alerte : votre photo révèle où elle a été prise !";
+        sub.textContent = "Sans le savoir, ce fichier contient des coordonnées GPS précises au mètre près.";
+
+        const delta = 0.005;
+        const bbox = `${lon - delta},${lat - delta},${lon + delta},${lat + delta}`;
+        const mapUrl = `https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&layer=mapnik&marker=${lat},${lon}`;
+        const extUrl = `https://www.openstreetmap.org/?mlat=${lat}&mlon=${lon}#map=16/${lat}/${lon}`;
+
+        gpsContent.innerHTML = `
+          <div class="info-row">
+            <span class="info-label">Coordonnées GPS</span>
+            <span class="info-val danger">${lat.toFixed(5)}, ${lon.toFixed(5)}</span>
+          </div>
+          <iframe class="map-frame" src="${mapUrl}" loading="lazy"></iframe>
+          <a class="map-link" href="${extUrl}" target="_blank" rel="noopener">🔎 Ouvrir le point exact sur la carte</a>
+        `;
+        btnDemo2.style.display = 'none';
+      } else {
+        banner.classList.add('safe');
+        title.textContent = "✅ Bonne nouvelle : pas de GPS détecté !";
+        sub.textContent = "Votre photo ne contient pas de position GPS (réglage désactivé ou photo déjà nettoyée par une messagerie).";
+        gpsContent.innerHTML = `
+          <div class="info-row">
+            <span class="info-label">Statut GPS</span>
+            <span class="info-val ok">Aucune coordonnée trouvée</span>
+          </div>
+          <p style="font-size:0.86rem; color:#94a3b8; margin:10px 0 0 0;">
+            Attention : d'autres photos prises directement avec votre appareil photo peuvent en contenir. Cliquez sur « Voir un exemple avec GPS » ci-dessous pour constater le résultat.
+          </p>
+        `;
+        btnDemo2.style.display = 'inline-block';
+      }
+    }
+
+    // Lecture d'une vraie photo choisie par l'utilisateur
+    fileInput.addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const imgUrl = URL.createObjectURL(file);
+      const sizeKo = (file.size / 1024).toFixed(0);
+      const fileStr = `${file.name} (${sizeKo} Ko)`;
+
+      let exif = null;
+      let gps = null;
+      try {
+        if (window.exifr) {
+          exif = await exifr.parse(file);
+          gps = await exifr.gps(file);
+        }
+      } catch (err) {
+        console.warn("Lecture EXIF impossible :", err);
+      }
+
+      const make = exif && exif.Make ? exif.Make.trim() : "";
+      const model = exif && exif.Model ? exif.Model.trim() : "";
+      const device = (make || model) ? `${make} ${model}`.trim() : "Non détecté";
+      const dateStr = formatDate(exif && (exif.DateTimeOriginal || exif.CreateDate || exif.ModifyDate));
+      const software = exif && exif.Software ? exif.Software : "Non renseigné";
+
+      let camParts = [];
+      if (exif && exif.ISO) camParts.push(`ISO ${exif.ISO}`);
+      if (exif && exif.FNumber) camParts.push(`f/${exif.FNumber}`);
+      if (exif && exif.FocalLength) camParts.push(`${exif.FocalLength}mm`);
+      const camStr = camParts.length ? camParts.join(" • ") : "Non renseigné";
+
+      showLoading(() => {
+        renderResult({
+          imgUrl,
+          device,
+          dateStr,
+          software,
+          camStr,
+          fileStr,
+          lat: gps ? gps.latitude : null,
+          lon: gps ? gps.longitude : null,
+          isDemo: false
+        });
+      });
+
+      fileInput.value = "";
+    });
+
+    // Mode démo (exemple réaliste avec GPS)
+    function runDemo() {
+      showLoading(() => {
+        renderResult({
+          imgUrl: null,
+          device: "Apple iPhone 15 Pro",
+          dateStr: "14/11/2026 à 18:42:11",
+          software: "iOS 18.1",
+          camStr: "ISO 125 • f/1.8 • 24mm",
+          fileStr: "IMG_4829.JPG (3 420 Ko)",
+          lat: -22.2758,
+          lon: 166.4580,
+          isDemo: true
+        });
+      });
+    }
+
+    document.getElementById('btn-demo').addEventListener('click', runDemo);
+    document.getElementById('btn-demo-2').addEventListener('click', runDemo);
+
+    document.getElementById('btn-retry').addEventListener('click', () => {
+      revealView.style.display = 'none';
+      document.body.classList.remove('revealed');
+      gameView.style.display = 'block';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+  </script>
+
+</body>
+</html>
