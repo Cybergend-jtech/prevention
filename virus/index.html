@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Alerte Sécurité Système — Action requise</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: #e2e8f0;
+      color: #0f172a;
+      min-height: 100dvh;
+      transition: background 0.35s ease, color 0.35s ease;
+    }
+
+    /* ==================== PHASE 1 : FAUSSE ALERTE VIRUS (SCAREWARE) ==================== */
+    #scare-view {
+      max-width: 460px;
+      margin: 0 auto;
+      padding: 20px 14px 36px 14px;
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+    .popup-card {
+      background: #ffffff;
+      border-radius: 18px;
+      overflow: hidden;
+      box-shadow: 0 18px 40px rgba(15, 23, 42, 0.25);
+      border: 2px solid #dc2626;
+      animation: shake 0.45s ease;
+    }
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      20% { transform: translateX(-6px); }
+      40% { transform: translateX(6px); }
+      60% { transform: translateX(-4px); }
+      80% { transform: translateX(4px); }
+    }
+    .popup-header {
+      background: #dc2626;
+      color: #fff;
+      padding: 16px 18px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .pulse-icon {
+      font-size: 2rem;
+      animation: pulse 1s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.15); }
+    }
+    .popup-header h1 {
+      margin: 0;
+      font-size: 1.15rem;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+    }
+    .popup-header small {
+      display: block;
+      opacity: 0.9;
+      font-size: 0.8rem;
+      margin-top: 2px;
+    }
+
+    .popup-body {
+      padding: 20px 18px;
+      text-align: center;
+    }
+    .threat-count {
+      display: inline-block;
+      background: #fef2f2;
+      color: #b91c1c;
+      border: 1px solid #fecaca;
+      font-weight: 800;
+      font-size: 0.92rem;
+      padding: 6px 14px;
+      border-radius: 999px;
+      margin-bottom: 14px;
+    }
+    .popup-body p {
+      margin: 0 0 14px 0;
+      font-size: 0.94rem;
+      color: #334155;
+      line-height: 1.5;
+    }
+    .threat-list {
+      text-align: left;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 10px 12px;
+      margin-bottom: 16px;
+      font-family: "Courier New", monospace;
+      font-size: 0.8rem;
+      color: #b91c1c;
+    }
+    .threat-list div { margin-bottom: 5px; }
+    .threat-list div:last-child { margin-bottom: 0; }
+
+    .timer-bar {
+      background: #fff7ed;
+      border: 1px solid #fed7aa;
+      color: #c2410c;
+      font-weight: 700;
+      font-size: 0.88rem;
+      padding: 9px 12px;
+      border-radius: 10px;
+      margin-bottom: 18px;
+    }
+
+    .btn-clean {
+      width: 100%;
+      background: linear-gradient(135deg, #dc2626, #b91c1c);
+      color: #fff;
+      border: none;
+      padding: 15px 18px;
+      border-radius: 12px;
+      font-size: 1.05rem;
+      font-weight: 800;
+      cursor: pointer;
+      box-shadow: 0 6px 18px rgba(220, 38, 38, 0.35);
+      margin-bottom: 12px;
+    }
+    .btn-clean:active { transform: scale(0.98); }
+
+    .btn-ignore {
+      width: 100%;
+      background: transparent;
+      border: 1px solid #cbd5e1;
+      color: #64748b;
+      padding: 10px;
+      border-radius: 10px;
+      font-size: 0.86rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .btn-ignore:hover { background: #f1f5f9; color: #0f172a; }
+
+    /* ==================== PHASE INTERMÉDIAIRE : FAUX CHIFFREMENT ==================== */
+    #encrypt-view {
+      display: none;
+      max-width: 460px;
+      margin: 0 auto;
+      padding: 90px 20px;
+      text-align: center;
+      color: #f8fafc;
+    }
+    .prog-track {
+      width: 100%;
+      height: 16px;
+      background: #1e293b;
+      border-radius: 999px;
+      overflow: hidden;
+      margin: 18px 0 10px 0;
+      border: 1px solid #ef4444;
+    }
+    .prog-fill {
+      height: 100%;
+      width: 0%;
+      background: #ef4444;
+      transition: width 0.25s linear;
+    }
+    #encrypt-log {
+      font-family: "Courier New", monospace;
+      font-size: 0.86rem;
+      color: #fca5a5;
+    }
+
+    /* ==================== PHASE 2A : FAUSSE PAGE RANÇONGICIEL ==================== */
+    body.ransom-mode {
+      background: #450a0a;
+      color: #fff;
+    }
+    #ransom-view {
+      display: none;
+      max-width: 540px;
+      margin: 0 auto;
+      padding: 24px 16px 40px 16px;
+      text-align: center;
+      animation: fadeIn 0.35s ease;
+    }
+    .lock-icon {
+      font-size: 4rem;
+      display: block;
+      margin-bottom: 10px;
+    }
+    .ransom-title {
+      font-family: "Courier New", monospace;
+      font-size: clamp(1.5rem, 6vw, 2.1rem);
+      color: #fecaca;
+      margin: 0 0 12px 0;
+      text-shadow: 0 0 18px rgba(239, 68, 68, 0.8);
+    }
+    .ransom-box {
+      background: rgba(0, 0, 0, 0.55);
+      border: 2px solid #ef4444;
+      border-radius: 14px;
+      padding: 18px;
+      text-align: left;
+      font-family: "Courier New", monospace;
+      font-size: 0.88rem;
+      line-height: 1.55;
+      color: #fee2e2;
+      margin-bottom: 20px;
+    }
+    .ransom-sim-tag {
+      display: inline-block;
+      background: #fbbf24;
+      color: #0f172a;
+      font-weight: 800;
+      font-size: 0.8rem;
+      padding: 4px 12px;
+      border-radius: 999px;
+      margin-bottom: 12px;
+      text-transform: uppercase;
+    }
+    .btn-debrief {
+      width: 100%;
+      background: #ffffff;
+      color: #991b1b;
+      border: none;
+      padding: 16px 20px;
+      border-radius: 12px;
+      font-size: 1.05rem;
+      font-weight: 800;
+      cursor: pointer;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+    }
+
+    /* ==================== PHASE 3 : DÉBRIEFING PÉDAGOGIQUE ==================== */
+    body.debrief-mode {
+      background: #0b1120;
+      color: #e2e8f0;
+    }
+    #debrief-view {
+      display: none;
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 20px 14px 48px 14px;
+      animation: fadeIn 0.4s ease;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .debrief-banner {
+      border-radius: 16px;
+      padding: 22px 18px;
+      text-align: center;
+      color: #fff;
+      margin-bottom: 18px;
+    }
+    .debrief-banner.trapped {
+      background: linear-gradient(135deg, #991b1b, #ea580c);
+    }
+    .debrief-banner.saved {
+      background: linear-gradient(135deg, #047857, #0d9488);
+    }
+    .debrief-pill {
+      display: inline-block;
+      background: rgba(0,0,0,0.28);
+      padding: 4px 12px;
+      border-radius: 999px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+    .debrief-banner h1 {
+      margin: 0 0 8px 0;
+      font-size: clamp(1.35rem, 5.5vw, 1.85rem);
+    }
+    .debrief-banner p { margin: 0; font-size: 0.94rem; opacity: 0.95; }
+
+    .reassure-box {
+      background: #1e293b;
+      border-left: 4px solid #38bdf8;
+      border-radius: 10px;
+      padding: 14px 16px;
+      margin-bottom: 18px;
+      font-size: 0.92rem;
+    }
+    .reassure-box strong { color: #38bdf8; }
+
+    .card {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 14px;
+      padding: 18px;
+      margin-bottom: 16px;
+    }
+    .card h2 {
+      margin: 0 0 12px 0;
+      font-size: 1.05rem;
+      color: #f8fafc;
+      border-bottom: 1px solid #334155;
+      padding-bottom: 8px;
+    }
+    .card ul {
+      margin: 0;
+      padding-left: 20px;
+      font-size: 0.92rem;
+      color: #cbd5e1;
+    }
+    .card li { margin-bottom: 9px; }
+    .card strong { color: #fbbf24; }
+
+    .tips-card {
+      background: #0f172a;
+      border: 1px solid #22c55e;
+      border-radius: 14px;
+      padding: 18px;
+      margin-bottom: 20px;
+    }
+    .tips-card h2 {
+      margin: 0 0 10px 0;
+      font-size: 1.05rem;
+      color: #4ade80;
+    }
+    .tips-card ul {
+      margin: 0;
+      padding-left: 20px;
+      font-size: 0.9rem;
+      color: #cbd5e1;
+    }
+    .tips-card li { margin-bottom: 8px; }
+
+    .actions-row {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    .btn-action {
+      background: #3b82f6;
+      color: #fff;
+      border: none;
+      padding: 12px 20px;
+      border-radius: 10px;
+      font-size: 0.94rem;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .btn-action.secondary {
+      background: transparent;
+      border: 1px solid #475569;
+      color: #cbd5e1;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ==================== PHASE 1 : FAUSSE ALERTE VIRUS ==================== -->
+  <div id="scare-view">
+    <div class="popup-card">
+      <div class="popup-header">
+        <span class="pulse-icon">⚠️</span>
+        <div>
+          <h1>Alerte de sécurité critique</h1>
+          <small>Analyse système automatique • Navigateur Web</small>
+        </div>
+      </div>
+      <div class="popup-body">
+        <div class="threat-count">🚨 3 menaces graves détectées</div>
+        <p>Votre appareil a été infecté lors de votre dernière navigation. Vos <strong>photos, contacts et identifiants bancaires</strong> risquent d'être copiés.</p>
+
+        <div class="threat-list">
+          <div>• Trojan.Mobile.Spyware [Actif]</div>
+          <div>• Keylogger.BankStealer [Critique]</div>
+          <div>• Faille système non corrigée</div>
+        </div>
+
+        <div class="timer-bar">
+          ⏳ Blocage définitif estimé dans : <span id="scare-timer">01:45</span>
+        </div>
+
+        <button type="button" class="btn-clean" id="btn-clean">🛡️ Nettoyer et sécuriser (Gratuit)</button>
+        <button type="button" class="btn-ignore" id="btn-ignore">Ignorer et fermer cette alerte</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== PHASE INTERMÉDIAIRE ==================== -->
+  <div id="encrypt-view">
+    <div style="font-size: 2.5rem; margin-bottom: 10px;">⚙️</div>
+    <h2 style="margin: 0; color: #f87171;">Exécution du programme...</h2>
+    <div class="prog-track"><div class="prog-fill" id="prog-fill"></div></div>
+    <div id="encrypt-log">Initialisation...</div>
+  </div>
+
+  <!-- ==================== PHASE 2A : SIMULATION RANÇONGICIEL ==================== -->
+  <div id="ransom-view">
+    <div class="ransom-sim-tag">⚠️ Simulation pédagogique — Aucun danger réel</div>
+    <span class="lock-icon">🔒</span>
+    <h1 class="ransom-title">VOS FICHIERS SONT CHIFFRÉS !</h1>
+    <div class="ransom-box">
+      <strong>&gt; État :</strong> 1 482 photos et documents verrouillés.<br>
+      <strong>&gt; Cause :</strong> Vous avez cliqué sur une fausse alerte de sécurité (« Scareware »).<br><br>
+      Dans la vraie vie, ce clic aurait pu installer une application malveillante ou vous renvoyer vers un <strong>faux numéro de support technique</strong> exigeant un paiement pour « débloquer » votre appareil.
+    </div>
+    <button type="button" class="btn-debrief" id="btn-to-debrief">😮 Ouf ! Comprendre le piège et les bons réflexes</button>
+  </div>
+
+  <!-- ==================== PHASE 3 : DÉBRIEFING ==================== -->
+  <div id="debrief-view">
+    <div class="debrief-banner" id="debrief-banner">
+      <div class="debrief-pill">🕵️‍♂️ Atelier de prévention numérique</div>
+      <h1 id="debrief-title">--</h1>
+      <p id="debrief-sub">--</p>
+    </div>
+
+    <div class="reassure-box">
+      <strong>Rassurez-vous :</strong> votre téléphone n'a <strong>aucun virus</strong> et aucun fichier n'a été touché. Cette page web a simplement simulé une <strong>arnaque au faux support technique (Scareware)</strong> pour vous montrer comment les escrocs jouent sur la peur.
+    </div>
+
+    <div class="card">
+      <h2>🔍 Comment reconnaître une fausse alerte virus ?</h2>
+      <ul>
+        <li><strong>Un site web ne peut JAMAIS analyser votre téléphone :</strong> une simple page ouverte dans Chrome ou Safari n'a pas accès à votre système pour détecter des virus.</li>
+        <li><strong>La mise en scène de la panique :</strong> compte à rebours, texte rouge clignotant, bruit d'alarme ou vibrations servent à vous faire cliquer avant de réfléchir.</li>
+        <li><strong>Le but réel des escrocs :</strong> vous faire télécharger une fausse application antivirus payante, voler votre carte bancaire, ou vous faire appeler un faux « technicien » qui prendra le contrôle de votre appareil à distance.</li>
+      </ul>
+    </div>
+
+    <div class="tips-card">
+      <h2>🛡️ Les 3 bons réflexes face à une alerte suspecte</h2>
+      <ul>
+        <li><strong>Ne cliquez sur aucun bouton dans la fenêtre :</strong> fermez simplement l'onglet (ou quittez votre navigateur).</li>
+        <li><strong>N'appelez jamais un numéro affiché</strong> dans une alerte pop-up, même s'il affiche le logo de Microsoft, Apple ou de votre opérateur.</li>
+        <li><strong>Maintenez votre appareil à jour et sauvegardez vos photos :</strong> en cas de vrai rançongiciel, une sauvegarde externe est la seule garantie de tout récupérer sans jamais payer.</li>
+      </ul>
+    </div>
+
+    <div class="actions-row">
+      <button type="button" class="btn-action" id="btn-replay">🔄 Rejouer le scénario</button>
+      <button type="button" class="btn-action secondary" id="btn-see-trap" style="display:none;">👀 Voir le piège si j'avais cliqué</button>
+    </div>
+  </div>
+
+  <script>
+    let timeLeft = 105;
+    let timerInterval = null;
+
+    function startScareTimer() {
+      clearInterval(timerInterval);
+      timeLeft = 105;
+      updateTimerText();
+      timerInterval = setInterval(() => {
+        if (timeLeft > 1) {
+          timeLeft--;
+          updateTimerText();
+        }
+      }, 1000);
+    }
+
+    function updateTimerText() {
+      const m = String(Math.floor(timeLeft / 60)).padStart(2, '0');
+      const s = String(timeLeft % 60).padStart(2, '0');
+      document.getElementById('scare-timer').textContent = `${m}:${s}`;
+    }
+
+    function runTrapSequence() {
+      clearInterval(timerInterval);
+      document.getElementById('scare-view').style.display = 'none';
+      document.getElementById('debrief-view').style.display = 'none';
+      document.body.className = 'debrief-mode';
+      document.getElementById('encrypt-view').style.display = 'block';
+
+      const fill = document.getElementById('prog-fill');
+      const log = document.getElementById('encrypt-log');
+      const steps = [
+        { pct: 25, txt: "Téléchargement du faux correctif..." },
+        { pct: 60, txt: "Accès à la galerie photos..." },
+        { pct: 90, txt: "Chiffrement des documents en cours..." },
+        { pct: 100, txt: "Verrouillage terminé." }
+      ];
+
+      let i = 0;
+      fill.style.width = '5%';
+      const seq = setInterval(() => {
+        if (i < steps.length) {
+          fill.style.width = steps[i].pct + '%';
+          log.textContent = steps[i].txt;
+          i++;
+        } else {
+          clearInterval(seq);
+          document.getElementById('encrypt-view').style.display = 'none';
+          document.body.className = 'ransom-mode';
+          document.getElementById('ransom-view').style.display = 'block';
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+      }, 380);
+    }
+
+    function showDebrief(wasTrapped) {
+      clearInterval(timerInterval);
+      document.getElementById('scare-view').style.display = 'none';
+      document.getElementById('ransom-view').style.display = 'none';
+      document.body.className = 'debrief-mode';
+      document.getElementById('debrief-view').style.display = 'block';
+
+      const banner = document.getElementById('debrief-banner');
+      const title = document.getElementById('debrief-title');
+      const sub = document.getElementById('debrief-sub');
+      const btnSeeTrap = document.getElementById('btn-see-trap');
+
+      if (wasTrapped) {
+        banner.className = 'debrief-banner trapped';
+        title.textContent = "Piégé par la panique !";
+        sub.textContent = "Cette fausse alerte virus était une pure mise en scène pour vous faire cliquer dans l'urgence.";
+        btnSeeTrap.style.display = 'none';
+      } else {
+        banner.className = 'debrief-banner saved';
+        title.textContent = "✅ Excellent réflexe !";
+        sub.textContent = "Vous avez refusé de céder à la panique face à une fausse alerte virus (Scareware).";
+        btnSeeTrap.style.display = 'inline-block';
+      }
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    document.getElementById('btn-clean').addEventListener('click', runTrapSequence);
+    document.getElementById('btn-ignore').addEventListener('click', () => showDebrief(false));
+    document.getElementById('btn-to-debrief').addEventListener('click', () => showDebrief(true));
+    document.getElementById('btn-see-trap').addEventListener('click', runTrapSequence);
+
+    document.getElementById('btn-replay').addEventListener('click', () => {
+      document.getElementById('debrief-view').style.display = 'none';
+      document.body.className = '';
+      document.getElementById('scare-view').style.display = 'flex';
+      startScareTimer();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+
+    startScareTimer();
+  </script>
+</body>
+</html>
