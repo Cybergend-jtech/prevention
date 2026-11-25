@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Phishing ou Légitime ? — Le Quiz Anti-Arnaques</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: #0b1120;
+      color: #e2e8f0;
+      min-height: 100dvh;
+      padding: 18px 14px 44px 14px;
+    }
+
+    .container {
+      max-width: 560px;
+      margin: 0 auto;
+    }
+
+    /* EN-TÊTE */
+    .header {
+      text-align: center;
+      margin-bottom: 18px;
+    }
+    .pill {
+      display: inline-block;
+      background: rgba(56, 189, 248, 0.15);
+      border: 1px solid rgba(56, 189, 248, 0.4);
+      color: #38bdf8;
+      font-size: 0.76rem;
+      font-weight: 700;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      padding: 4px 12px;
+      border-radius: 999px;
+      margin-bottom: 8px;
+    }
+    h1 {
+      margin: 0 0 6px 0;
+      font-size: clamp(1.45rem, 6vw, 1.95rem);
+      color: #f8fafc;
+    }
+    .subtitle {
+      margin: 0;
+      font-size: 0.9rem;
+      color: #94a3b8;
+    }
+
+    /* BARRE DE PROGRESSION */
+    .progress-wrap {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 14px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: #94a3b8;
+    }
+    .progress-track {
+      flex: 1;
+      height: 8px;
+      background: #1e293b;
+      border-radius: 999px;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #38bdf8, #818cf8);
+      transition: width 0.35s ease;
+    }
+
+    /* CARTE MESSAGE (STYLE SMS OU EMAIL) */
+    .msg-card {
+      background: #ffffff;
+      color: #1e293b;
+      border-radius: 18px;
+      overflow: hidden;
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
+      margin-bottom: 16px;
+      animation: popIn 0.3s ease;
+    }
+    @keyframes popIn {
+      from { opacity: 0; transform: translateY(8px) scale(0.98); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .msg-top {
+      background: #f1f5f9;
+      padding: 12px 16px;
+      border-bottom: 1px solid #e2e8f0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+    }
+    .msg-type {
+      font-size: 0.75rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      padding: 3px 9px;
+      border-radius: 6px;
+    }
+    .msg-type.sms { background: #dcfce7; color: #166534; }
+    .msg-type.email { background: #dbeafe; color: #1e40af; }
+    .msg-time { font-size: 0.78rem; color: #64748b; }
+
+    .msg-meta {
+      padding: 12px 16px 8px 16px;
+      border-bottom: 1px dashed #e2e8f0;
+      font-size: 0.86rem;
+    }
+    .meta-line { margin-bottom: 4px; word-break: break-word; }
+    .meta-line:last-child { margin-bottom: 0; }
+    .meta-label { color: #64748b; font-weight: 600; }
+    .meta-val { color: #0f172a; font-weight: 700; }
+
+    .msg-body {
+      padding: 16px;
+      font-size: 0.96rem;
+      line-height: 1.55;
+      color: #1e293b;
+    }
+    .sms-bubble {
+      background: #e2e8f0;
+      padding: 13px 15px;
+      border-radius: 14px 14px 14px 4px;
+      display: inline-block;
+      max-width: 100%;
+    }
+    .fake-link {
+      color: #2563eb;
+      text-decoration: underline;
+      word-break: break-all;
+      font-weight: 600;
+    }
+    .fake-btn {
+      display: inline-block;
+      margin-top: 10px;
+      background: #2563eb;
+      color: #fff;
+      padding: 9px 16px;
+      border-radius: 8px;
+      font-size: 0.88rem;
+      font-weight: 700;
+    }
+
+    /* BOUTONS DE CHOIX */
+    .choice-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    .btn-choice {
+      padding: 16px 12px;
+      border: none;
+      border-radius: 14px;
+      font-size: 1.05rem;
+      font-weight: 800;
+      cursor: pointer;
+      color: #fff;
+      transition: transform 0.12s, opacity 0.2s;
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
+    }
+    .btn-choice:active { transform: scale(0.96); }
+    .btn-scam { background: linear-gradient(135deg, #dc2626, #b91c1c); }
+    .btn-legit { background: linear-gradient(135deg, #16a34a, #15803d); }
+    .btn-choice:disabled { opacity: 0.45; cursor: default; transform: none; }
+
+    /* EXPLICATION APRÈS RÉPONSE */
+    .feedback-box {
+      display: none;
+      border-radius: 14px;
+      padding: 16px;
+      margin-bottom: 16px;
+      animation: popIn 0.25s ease;
+    }
+    .feedback-box.correct {
+      background: rgba(34, 197, 94, 0.14);
+      border: 1px solid rgba(34, 197, 94, 0.5);
+    }
+    .feedback-box.wrong {
+      background: rgba(239, 68, 68, 0.14);
+      border: 1px solid rgba(239, 68, 68, 0.5);
+    }
+    .feedback-title {
+      font-size: 1.08rem;
+      font-weight: 800;
+      margin: 0 0 8px 0;
+    }
+    .feedback-box.correct .feedback-title { color: #4ade80; }
+    .feedback-box.wrong .feedback-title { color: #f87171; }
+    .feedback-text {
+      margin: 0 0 12px 0;
+      font-size: 0.92rem;
+      color: #e2e8f0;
+      line-height: 1.5;
+    }
+    .clue-tag {
+      display: inline-block;
+      background: rgba(15, 23, 42, 0.7);
+      border: 1px solid #475569;
+      color: #fbbf24;
+      font-size: 0.8rem;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 8px;
+      margin: 0 6px 6px 0;
+    }
+
+    .btn-next {
+      display: none;
+      width: 100%;
+      background: #3b82f6;
+      color: #fff;
+      border: none;
+      padding: 14px;
+      border-radius: 12px;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .btn-next:hover { background: #2563eb; }
+
+    /* ÉCRAN FINAL */
+    #final-view {
+      display: none;
+      text-align: center;
+      animation: popIn 0.4s ease;
+    }
+    .score-card {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 18px;
+      padding: 26px 20px;
+      margin-bottom: 18px;
+    }
+    .score-emoji { font-size: 3.2rem; display: block; margin-bottom: 8px; }
+    .score-num {
+      font-size: 2.6rem;
+      font-weight: 900;
+      color: #38bdf8;
+      margin: 0 0 6px 0;
+    }
+    .score-rank {
+      display: inline-block;
+      background: rgba(56, 189, 248, 0.15);
+      color: #7dd3fc;
+      padding: 5px 14px;
+      border-radius: 999px;
+      font-weight: 700;
+      font-size: 0.95rem;
+      margin-bottom: 12px;
+    }
+    .score-msg {
+      margin: 0;
+      font-size: 0.94rem;
+      color: #cbd5e1;
+      line-height: 1.5;
+    }
+
+    .tips-card {
+      background: #0f172a;
+      border: 1px solid #22c55e;
+      border-radius: 14px;
+      padding: 18px;
+      text-align: left;
+      margin-bottom: 18px;
+    }
+    .tips-card h2 {
+      margin: 0 0 10px 0;
+      font-size: 1.02rem;
+      color: #4ade80;
+    }
+    .tips-card ul {
+      margin: 0;
+      padding-left: 18px;
+      font-size: 0.88rem;
+      color: #cbd5e1;
+    }
+    .tips-card li { margin-bottom: 7px; }
+
+    .btn-replay {
+      background: #4f46e5;
+      color: #fff;
+      border: none;
+      padding: 14px 28px;
+      border-radius: 12px;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="pill">🎯 Atelier de prévention numérique</div>
+      <h1>Phishing ou Légitime ?</h1>
+      <p class="subtitle">7 messages reçus sur smartphone : saurez-vous repérer les arnaques ?</p>
+    </div>
+
+    <!-- ZONE QUIZ -->
+    <div id="quiz-view">
+      <div class="progress-wrap">
+        <span id="q-counter">Message 1 / 7</span>
+        <div class="progress-track"><div class="progress-fill" id="progress-fill"></div></div>
+        <span id="q-score">Score : 0</span>
+      </div>
+
+      <div class="msg-card" id="msg-card"></div>
+
+      <div class="choice-row">
+        <button type="button" class="btn-choice btn-scam" id="btn-scam" onclick="answer(true)">🚨 Arnaque</button>
+        <button type="button" class="btn-choice btn-legit" id="btn-legit" onclick="answer(false)">✅ Légitime</button>
+      </div>
+
+      <div class="feedback-box" id="feedback-box">
+        <div class="feedback-title" id="feedback-title"></div>
+        <p class="feedback-text" id="feedback-text"></p>
+        <div id="feedback-clues"></div>
+      </div>
+
+      <button type="button" class="btn-next" id="btn-next" onclick="nextQuestion()">Message suivant ➔</button>
+    </div>
+
+    <!-- ÉCRAN FINAL -->
+    <div id="final-view">
+      <div class="score-card">
+        <span class="score-emoji" id="final-emoji">🏆</span>
+        <div class="score-num" id="final-score">0 / 7</div>
+        <div class="score-rank" id="final-rank">--</div>
+        <p class="score-msg" id="final-msg"></p>
+      </div>
+
+      <div class="tips-card">
+        <h2>🛡️ Les 3 réflexes anti-phishing à retenir</h2>
+        <ul>
+          <li><strong>Méfiez-vous de l'urgence :</strong> « sous 24h », « compte bloqué », « dernier rappel » sont les déclencheurs préférés des escrocs pour vous empêcher de réfléchir.</li>
+          <li><strong>Vérifiez toujours l'expéditeur et le lien :</strong> ne cliquez jamais sur un lien reçu par SMS ou e-mail pour vous connecter ; passez directement par votre application officielle.</li>
+          <li><strong>En cas de doute sur un proche ou une banque :</strong> raccrochez ou ignorez le message, puis appelez la personne sur son <em>ancien numéro habituel</em>.</li>
+        </ul>
+      </div>
+
+      <button type="button" class="btn-replay" onclick="restartQuiz()">🔄 Rejouer le quiz</button>
+    </div>
+  </div>
+
+  <script>
+    const questions = [
+      {
+        type: "sms",
+        typeLabel: "💬 SMS reçu",
+        time: "Aujourd'hui • 09:14",
+        sender: "+33 6 48 19 82 04",
+        subject: null,
+        bodyHtml: `<div class="sms-bubble">Info Colis : Votre paquet n°FR8492 est bloqué au centre de tri (frais de douane 1,99€ impayés). Régularisez sous 24h avant retour : <span class="fake-link">https://suivi-colis-express.info/payer</span></div>`,
+        isScam: true,
+        explanation: "C'est une arnaque classique au faux colis. Le but n'est pas de vous voler 1,99 €, mais de récupérer vos numéros de carte bancaire sur le faux site de paiement.",
+        clues: ["Numéro de portable personnel", "Urgence (sous 24h)", "Lien hors site officiel"]
+      },
+      {
+        type: "sms",
+        typeLabel: "💬 SMS reçu",
+        time: "Aujourd'hui • 10:02",
+        sender: "Cabinet Dr Martin",
+        subject: null,
+        bodyHtml: `<div class="sms-bubble">Bonjour, nous vous confirmons votre rendez-vous demain à 14h30 au cabinet médical. En cas d'empêchement, merci de nous appeler au secrétariat. Ne pas répondre à ce SMS.</div>`,
+        isScam: false,
+        explanation: "Ce message est légitime. Il est purement informatif : aucun lien cliquable suspect, aucune demande de paiement ni de données personnelles.",
+        clues: ["Aucun lien piégé", "Aucune demande bancaire", "Information neutre"]
+      },
+      {
+        type: "email",
+        typeLabel: "📧 E-mail reçu",
+        time: "Aujourd'hui • 11:28",
+        sender: "Service Sécurité <alerte@banque-verif-client.com>",
+        subject: "URGENT : Votre carte bancaire va être suspendue",
+        bodyHtml: `Cher client,<br><br>Une connexion inhabituelle a été détectée sur votre espace. Par mesure de sécurité, votre carte sera <strong>bloquée ce soir à minuit</strong> si vous ne confirmez pas votre identité.<br><span class="fake-btn">Vérifier mon compte maintenant</span>`,
+        isScam: true,
+        explanation: "C'est du phishing bancaire ! L'adresse d'expéditeur (« banque-verif-client.com ») n'est pas celle d'une vraie banque, et le message joue sur la peur pour vous faire cliquer.",
+        clues: ["Expéditeur suspect", "Formule générique « Cher client »", "Menace de blocage immédiat"]
+      },
+      {
+        type: "sms",
+        typeLabel: "💬 SMS reçu",
+        time: "Aujourd'hui • 13:45",
+        sender: "Securite",
+        subject: null,
+        bodyHtml: `<div class="sms-bubble">Votre code de validation à usage unique est : <strong>482 915</strong>. Ne communiquez jamais ce code à qui que ce soit, même à un conseiller.</div>`,
+        isScam: false,
+        explanation: "C'est un vrai SMS de double authentification (2FA). Il ne contient aucun lien et rappelle la règle d'or : ne jamais transmettre ce code par téléphone ou SMS.",
+        clues: ["Aucun lien à cliquer", "Rappel de sécurité officiel"]
+      },
+      {
+        type: "sms",
+        typeLabel: "💬 SMS reçu",
+        time: "Aujourd'hui • 15:10",
+        sender: "07 52 91 04 33",
+        subject: null,
+        bodyHtml: `<div class="sms-bubble">Coucou c'est moi, j'ai fait tomber mon téléphone dans l'eau 😭 je t'écris depuis un numéro temporaire. Tu peux m'aider ? J'ai une facture urgente à régler aujourd'hui et mon appli bancaire est bloquée...</div>`,
+        isScam: true,
+        explanation: "C'est l'arnaque très répandue du « faux proche » ! L'escroc ne donne aucun prénom pour que le message fonctionne sur tout le monde et demande ensuite un virement instantané.",
+        clues: ["Aucun prénom cité", "Nouveau numéro inconnu", "Demande d'argent urgente"]
+      },
+      {
+        type: "email",
+        typeLabel: "📧 E-mail reçu",
+        time: "Aujourd'hui • 16:40",
+        sender: "Support Abonnement <facture@netflx-paiement-update.net>",
+        subject: "Échec de votre dernier prélèvement",
+        bodyHtml: `Bonjour,<br><br>Votre dernier paiement a été refusé. Afin d'éviter la suppression définitive de vos profils, merci de mettre à jour votre carte bancaire en cliquant ici : <span class="fake-link">http://netflx-paiement-update.net/carte</span>`,
+        isScam: true,
+        explanation: "Faux e-mail d'abonnement ! Regardez bien l'orthographe du domaine : « netflx » (sans le i) et « http:// » non sécurisé. En cas de doute, ouvrez directement votre application.",
+        clues: ["Faute dans le domaine (netflx)", "Lien http:// suspect", "Demande de carte bancaire"]
+      },
+      {
+        type: "email",
+        typeLabel: "📧 E-mail reçu",
+        time: "Aujourd'hui • 18:05",
+        sender: "Espace Client <no-reply@votre-mutuelle.fr>",
+        subject: "Un nouveau document est disponible",
+        bodyHtml: `Bonjour Mme/M. Dupont,<br><br>Votre relevé mensuel est disponible. Pour le consulter en toute sécurité, rendez-vous directement sur votre application mobile ou tapez l'adresse habituelle de votre espace client.<br><br>Cordialement, votre conseiller.`,
+        isScam: false,
+        explanation: "Ce message est légitime : il est nominatif, ne crée aucune urgence et surtout il vous invite à vous connecter par vous-même sans vous imposer de lien cliquable.",
+        clues: ["Pas de lien direct imposé", "Ton calme, sans urgence", "Expéditeur cohérent"]
+      }
+    ];
+
+    let currentIdx = 0;
+    let score = 0;
+
+    function renderQuestion() {
+      const q = questions[currentIdx];
+      document.getElementById('q-counter').textContent = `Message ${currentIdx + 1} / ${questions.length}`;
+      document.getElementById('q-score').textContent = `Score : ${score}`;
+      document.getElementById('progress-fill').style.width = `${(currentIdx / questions.length) * 100}%`;
+
+      const subjectHtml = q.subject
+        ? `<div class="meta-line"><span class="meta-label">Objet : </span><span class="meta-val">${q.subject}</span></div>`
+        : '';
+
+      document.getElementById('msg-card').innerHTML = `
+        <div class="msg-top">
+          <span class="msg-type ${q.type}">${q.typeLabel}</span>
+          <span class="msg-time">${q.time}</span>
+        </div>
+        <div class="msg-meta">
+          <div class="meta-line"><span class="meta-label">De : </span><span class="meta-val">${q.sender}</span></div>
+          ${subjectHtml}
+        </div>
+        <div class="msg-body">${q.bodyHtml}</div>
+      `;
+
+      document.getElementById('btn-scam').disabled = false;
+      document.getElementById('btn-legit').disabled = false;
+      document.getElementById('feedback-box').style.display = 'none';
+      document.getElementById('btn-next').style.display = 'none';
+    }
+
+    function answer(userSaysScam) {
+      const q = questions[currentIdx];
+      const isCorrect = (userSaysScam === q.isScam);
+      if (isCorrect) score++;
+
+      document.getElementById('q-score').textContent = `Score : ${score}`;
+      document.getElementById('btn-scam').disabled = true;
+      document.getElementById('btn-legit').disabled = true;
+
+      const fbBox = document.getElementById('feedback-box');
+      fbBox.className = 'feedback-box ' + (isCorrect ? 'correct' : 'wrong');
+      document.getElementById('feedback-title').textContent = isCorrect
+        ? (q.isScam ? "✅ Bien vu ! C'était bien une arnaque." : "✅ Exact ! Ce message était légitime.")
+        : (q.isScam ? "❌ Piégé ! C'était une arnaque." : "❌ Fausse alerte ! Ce message était légitime.");
+
+      document.getElementById('feedback-text').textContent = q.explanation;
+      document.getElementById('feedback-clues').innerHTML = q.clues
+        .map(c => `<span class="clue-tag">🔍 ${c}</span>`).join('');
+
+      fbBox.style.display = 'block';
+      const btnNext = document.getElementById('btn-next');
+      btnNext.textContent = (currentIdx === questions.length - 1) ? "Voir mon score final 🏆" : "Message suivant ➔";
+      btnNext.style.display = 'block';
+    }
+
+    function nextQuestion() {
+      currentIdx++;
+      if (currentIdx < questions.length) {
+        renderQuestion();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } else {
+        showFinal();
+      }
+    }
+
+    function showFinal() {
+      document.getElementById('quiz-view').style.display = 'none';
+      document.getElementById('final-view').style.display = 'block';
+      document.getElementById('final-score').textContent = `${score} / ${questions.length}`;
+
+      let emoji, rank, msg;
+      if (score >= 6) {
+        emoji = "🦅";
+        rank = "Œil de Lynx Anti-Phishing";
+        msg = "Bravo ! Vous repérez presque tous les pièges. Continuez à garder ce recul, surtout quand un message vous met la pression.";
+      } else if (score >= 4) {
+        emoji = "🛡️";
+        rank = "Utilisateur Vigilant";
+        msg = "Bon score ! Quelques pièges bien ficelés vous ont fait hésiter : prenez toujours 5 secondes pour vérifier l'expéditeur et le lien.";
+      } else {
+        emoji = "🎣";
+        rank = "Cible facile (pour l'instant !)";
+        msg = "Les escrocs imitent très bien les vrais messages ! Retenez les 3 réflexes ci-dessous pour ne plus jamais tomber dans le panneau.";
+      }
+
+      document.getElementById('final-emoji').textContent = emoji;
+      document.getElementById('final-rank').textContent = rank;
+      document.getElementById('final-msg').textContent = msg;
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function restartQuiz() {
+      currentIdx = 0;
+      score = 0;
+      document.getElementById('final-view').style.display = 'none';
+      document.getElementById('quiz-view').style.display = 'block';
+      renderQuestion();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    renderQuestion();
+  </script>
+</body>
+</html>
