@@ -1,0 +1,931 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quizz Escape Game — Cybersécurité</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: #0b1120;
+      color: #e2e8f0;
+      min-height: 100dvh;
+      padding: 18px 14px 48px 14px;
+    }
+
+    .container {
+      max-width: 660px;
+      margin: 0 auto;
+    }
+
+    /* EN-TÊTE */
+    .header {
+      text-align: center;
+      margin-bottom: 18px;
+    }
+    .pill {
+      display: inline-block;
+      background: rgba(56, 189, 248, 0.15);
+      border: 1px solid rgba(56, 189, 248, 0.4);
+      color: #38bdf8;
+      font-size: 0.76rem;
+      font-weight: 700;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      padding: 4px 12px;
+      border-radius: 999px;
+      margin-bottom: 8px;
+    }
+    h1 {
+      margin: 0 0 6px 0;
+      font-size: clamp(1.45rem, 6vw, 2rem);
+      color: #f8fafc;
+    }
+    .subtitle {
+      margin: 0;
+      font-size: 0.92rem;
+      color: #94a3b8;
+    }
+
+    /* BARRE DE PROGRESSION */
+    .progress-wrap {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 14px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: #94a3b8;
+    }
+    .progress-track {
+      flex: 1;
+      height: 8px;
+      background: #1e293b;
+      border-radius: 999px;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #38bdf8, #818cf8);
+      transition: width 0.35s ease;
+    }
+
+    /* CARTE QUESTION */
+    .q-card {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 18px;
+      padding: 22px 18px;
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
+      margin-bottom: 16px;
+      animation: popIn 0.3s ease;
+    }
+    @keyframes popIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .q-type-badge {
+      display: inline-block;
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 6px;
+      margin-bottom: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+    }
+    .q-type-badge.single {
+      background: rgba(168, 85, 247, 0.18);
+      color: #d8b4fe;
+      border: 1px solid rgba(168, 85, 247, 0.4);
+    }
+    .q-type-badge.multi {
+      background: rgba(56, 189, 248, 0.16);
+      color: #7dd3fc;
+      border: 1px solid rgba(56, 189, 248, 0.35);
+    }
+    .q-title {
+      margin: 0 0 18px 0;
+      font-size: clamp(1.08rem, 4.2vw, 1.25rem);
+      line-height: 1.4;
+      color: #f8fafc;
+    }
+
+    /* LISTE DES PROPOSITIONS */
+    .options-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .option-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      background: #0f172a;
+      border: 2px solid #334155;
+      border-radius: 12px;
+      padding: 13px 14px;
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s, transform 0.1s;
+      user-select: none;
+    }
+    .option-item:hover:not(.locked) {
+      border-color: #64748b;
+      background: #131f38;
+    }
+    .option-item.selected:not(.locked) {
+      border-color: #38bdf8;
+      background: rgba(56, 189, 248, 0.12);
+    }
+    .option-item.locked {
+      cursor: default;
+    }
+
+    /* ÉTATS DE CORRECTION */
+    .option-item.res-correct {
+      border-color: #22c55e;
+      background: rgba(34, 197, 94, 0.14);
+    }
+    .option-item.res-missed {
+      border-color: #f59e0b;
+      background: rgba(245, 158, 11, 0.13);
+    }
+    .option-item.res-wrong {
+      border-color: #ef4444;
+      background: rgba(239, 68, 68, 0.15);
+    }
+    .option-item.res-neutral {
+      opacity: 0.55;
+    }
+
+    .opt-box {
+      width: 22px;
+      height: 22px;
+      min-width: 22px;
+      border: 2px solid #64748b;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.85rem;
+      font-weight: 800;
+      margin-top: 1px;
+      background: #1e293b;
+      color: #fff;
+      transition: all 0.15s;
+    }
+    .option-item.single-mode .opt-box {
+      border-radius: 50%;
+    }
+    .option-item.selected:not(.locked) .opt-box {
+      background: #38bdf8;
+      border-color: #38bdf8;
+      color: #0b1120;
+    }
+    .option-item.res-correct .opt-box {
+      background: #22c55e;
+      border-color: #22c55e;
+      color: #052e16;
+    }
+    .option-item.res-missed .opt-box {
+      background: #f59e0b;
+      border-color: #f59e0b;
+      color: #451a03;
+    }
+    .option-item.res-wrong .opt-box {
+      background: #ef4444;
+      border-color: #ef4444;
+      color: #fff;
+    }
+
+    .opt-content {
+      flex: 1;
+      font-size: 0.95rem;
+      line-height: 1.45;
+      color: #e2e8f0;
+    }
+    .opt-tag {
+      display: inline-block;
+      font-size: 0.72rem;
+      font-weight: 700;
+      margin-top: 4px;
+      padding: 2px 7px;
+      border-radius: 5px;
+    }
+    .tag-ok { background: rgba(34, 197, 94, 0.2); color: #4ade80; }
+    .tag-miss { background: rgba(245, 158, 11, 0.22); color: #fbbf24; }
+    .tag-bad { background: rgba(239, 68, 68, 0.22); color: #fca5a5; }
+
+    /* BOUTON VALIDER / SUIVANT */
+    .btn-primary {
+      width: 100%;
+      background: linear-gradient(135deg, #2563eb, #4f46e5);
+      color: #fff;
+      border: none;
+      padding: 15px 18px;
+      border-radius: 12px;
+      font-size: 1.02rem;
+      font-weight: 800;
+      cursor: pointer;
+      box-shadow: 0 6px 18px rgba(37, 99, 235, 0.35);
+      transition: transform 0.12s, opacity 0.2s;
+    }
+    .btn-primary:active { transform: scale(0.98); }
+    .btn-primary:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+
+    /* ENCART EXPLICATION */
+    .feedback-box {
+      display: none;
+      border-radius: 16px;
+      padding: 18px;
+      margin-bottom: 16px;
+      animation: popIn 0.25s ease;
+    }
+    .feedback-box.perfect {
+      background: rgba(34, 197, 94, 0.12);
+      border: 1px solid rgba(34, 197, 94, 0.5);
+    }
+    .feedback-box.partial {
+      background: rgba(245, 158, 11, 0.12);
+      border: 1px solid rgba(245, 158, 11, 0.5);
+    }
+    .feedback-box.wrong {
+      background: rgba(239, 68, 68, 0.12);
+      border: 1px solid rgba(239, 68, 68, 0.5);
+    }
+    .fb-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 10px;
+    }
+    .fb-title {
+      font-size: 1.05rem;
+      font-weight: 800;
+    }
+    .feedback-box.perfect .fb-title { color: #4ade80; }
+    .feedback-box.partial .fb-title { color: #fbbf24; }
+    .feedback-box.wrong .fb-title { color: #f87171; }
+    .fb-pts {
+      background: rgba(15, 23, 42, 0.75);
+      border: 1px solid #475569;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 0.82rem;
+      font-weight: 800;
+      color: #f8fafc;
+    }
+    .fb-body {
+      font-size: 0.91rem;
+      line-height: 1.55;
+      color: #e2e8f0;
+    }
+    .fb-body p { margin: 0 0 9px 0; }
+    .fb-body p:last-child { margin-bottom: 0; }
+    .fb-body ul {
+      margin: 6px 0 9px 0;
+      padding-left: 18px;
+    }
+    .fb-body li { margin-bottom: 5px; }
+
+    /* TABLEAU BRUTEFORCE (QUESTION 1) */
+    .bf-wrap {
+      margin-top: 12px;
+      overflow-x: auto;
+      border-radius: 10px;
+      border: 1px solid #334155;
+    }
+    .bf-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.74rem;
+      text-align: center;
+      min-width: 480px;
+    }
+    .bf-table th {
+      background: #0f172a;
+      color: #cbd5e1;
+      padding: 7px 5px;
+      border: 1px solid #334155;
+      font-weight: 700;
+    }
+    .bf-table td {
+      padding: 5px 4px;
+      border: 1px solid #1e293b;
+      font-weight: 600;
+    }
+    .bf-c-red { background: #991b1b; color: #fff; }
+    .bf-c-org { background: #d97706; color: #fff; }
+    .bf-c-yel { background: #fcd34d; color: #1e293b; }
+    .bf-c-crm { background: #fef3c7; color: #1e293b; }
+    .bf-c-grn { background: #15803d; color: #fff; }
+    .bf-c-num { background: #1e293b; color: #f8fafc; font-weight: 800; }
+
+    /* ÉCRAN FINAL */
+    #final-view {
+      display: none;
+      animation: popIn 0.4s ease;
+    }
+    .score-card {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 18px;
+      padding: 26px 20px;
+      text-align: center;
+      margin-bottom: 18px;
+    }
+    .score-emoji { font-size: 3.2rem; display: block; margin-bottom: 8px; }
+    .score-num {
+      font-size: 2.5rem;
+      font-weight: 900;
+      color: #38bdf8;
+      margin: 0 0 4px 0;
+    }
+    .score-pct {
+      font-size: 0.95rem;
+      color: #94a3b8;
+      margin-bottom: 12px;
+      font-weight: 600;
+    }
+    .score-rank {
+      display: inline-block;
+      background: rgba(56, 189, 248, 0.15);
+      color: #7dd3fc;
+      padding: 5px 14px;
+      border-radius: 999px;
+      font-weight: 700;
+      font-size: 0.95rem;
+      margin-bottom: 12px;
+    }
+    .score-msg {
+      margin: 0;
+      font-size: 0.93rem;
+      color: #cbd5e1;
+      line-height: 1.5;
+    }
+
+    .summary-card {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 16px;
+      padding: 18px;
+      margin-bottom: 18px;
+    }
+    .summary-card h2 {
+      margin: 0 0 12px 0;
+      font-size: 1.05rem;
+      color: #f8fafc;
+      border-bottom: 1px solid #334155;
+      padding-bottom: 8px;
+    }
+    .sum-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 0;
+      border-bottom: 1px dashed rgba(148, 163, 184, 0.2);
+      font-size: 0.88rem;
+    }
+    .sum-row:last-child { border-bottom: none; }
+    .sum-q { color: #cbd5e1; flex: 1; }
+    .sum-pts { font-weight: 800; white-space: nowrap; }
+    .sum-pts.ok { color: #4ade80; }
+    .sum-pts.mid { color: #fbbf24; }
+    .sum-pts.bad { color: #f87171; }
+
+    .scoring-note {
+      font-size: 0.78rem;
+      color: #64748b;
+      text-align: center;
+      margin-top: 14px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="pill">🔐 Quizz Escape Game • Cybersécurité</div>
+      <h1>Testez vos réflexes Cyber</h1>
+      <p class="subtitle">10 questions pour évaluer vos connaissances en sécurité informatique</p>
+    </div>
+
+    <!-- ZONE QUIZ -->
+    <div id="quiz-view">
+      <div class="progress-wrap">
+        <span id="q-counter">Question 1 / 10</span>
+        <div class="progress-track"><div class="progress-fill" id="progress-fill"></div></div>
+        <span id="q-score">Score : 0 / 10</span>
+      </div>
+
+      <div class="q-card" id="q-card">
+        <span class="q-type-badge" id="q-badge"></span>
+        <h2 class="q-title" id="q-title"></h2>
+        <div class="options-list" id="options-list"></div>
+      </div>
+
+      <div class="feedback-box" id="feedback-box">
+        <div class="fb-header">
+          <div class="fb-title" id="fb-title"></div>
+          <span class="fb-pts" id="fb-pts"></span>
+        </div>
+        <div class="fb-body" id="fb-body"></div>
+      </div>
+
+      <button type="button" class="btn-primary" id="btn-validate" disabled>Valider ma réponse</button>
+      <button type="button" class="btn-primary" id="btn-next" style="display:none;">Question suivante ➔</button>
+
+      <div class="scoring-note">
+        Barème : 1 point par question. Sur les questions à choix multiples, chaque bonne réponse rapporte une fraction du point et chaque mauvaise réponse cochée applique un malus (minimum 0 par question).
+      </div>
+    </div>
+
+    <!-- ÉCRAN FINAL -->
+    <div id="final-view">
+      <div class="score-card">
+        <span class="score-emoji" id="final-emoji">🏆</span>
+        <div class="score-num" id="final-score">0 / 10</div>
+        <div class="score-pct" id="final-pct">0 % de réussite</div>
+        <div class="score-rank" id="final-rank">--</div>
+        <p class="score-msg" id="final-msg"></p>
+      </div>
+
+      <div class="summary-card">
+        <h2>📋 Récapitulatif de vos résultats</h2>
+        <div id="summary-list"></div>
+      </div>
+
+      <button type="button" class="btn-primary" id="btn-replay">🔄 Recommencer le quizz</button>
+    </div>
+  </div>
+
+  <script>
+    const bruteForceTableHtml = `
+      <div class="bf-wrap">
+        <table class="bf-table">
+          <thead>
+            <tr>
+              <th colspan="6" style="background:#1e3a8a;color:#fff;">Temps nécessaire pour bruteforcer un mot de passe (référence 2022)</th>
+            </tr>
+            <tr>
+              <th>Car.</th>
+              <th>Chiffres seuls</th>
+              <th>Minuscules seules</th>
+              <th>Min. + Maj.</th>
+              <th>Min. + Maj. + Chiffres</th>
+              <th>Complet (+ Spéciaux)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td class="bf-c-num">4–6</td><td class="bf-c-red">Instantané</td><td class="bf-c-red">Instantané</td><td class="bf-c-red">Instantané</td><td class="bf-c-red">Instantané</td><td class="bf-c-red">Instantané</td></tr>
+            <tr><td class="bf-c-num">7</td><td class="bf-c-red">Instantané</td><td class="bf-c-red">Instantané</td><td class="bf-c-org">2 sec</td><td class="bf-c-org">7 sec</td><td class="bf-c-org">31 sec</td></tr>
+            <tr><td class="bf-c-num">8</td><td class="bf-c-red">Instantané</td><td class="bf-c-red">Instantané</td><td class="bf-c-org">2 min</td><td class="bf-c-org">7 min</td><td class="bf-c-org">39 min</td></tr>
+            <tr><td class="bf-c-num">9</td><td class="bf-c-red">Instantané</td><td class="bf-c-org">10 sec</td><td class="bf-c-org">1 heure</td><td class="bf-c-org">7 heures</td><td class="bf-c-org">2 jours</td></tr>
+            <tr><td class="bf-c-num">10</td><td class="bf-c-red">Instantané</td><td class="bf-c-org">4 min</td><td class="bf-c-org">3 jours</td><td class="bf-c-org">3 semaines</td><td class="bf-c-org">5 mois</td></tr>
+            <tr><td class="bf-c-num">11</td><td class="bf-c-red">Instantané</td><td class="bf-c-org">2 heures</td><td class="bf-c-org">5 mois</td><td class="bf-c-yel">3 ans</td><td class="bf-c-yel">34 ans</td></tr>
+            <tr><td class="bf-c-num">12</td><td class="bf-c-org">2 sec</td><td class="bf-c-org">2 jours</td><td class="bf-c-yel">24 ans</td><td class="bf-c-yel">200 ans</td><td class="bf-c-yel">3 000 ans</td></tr>
+            <tr><td class="bf-c-num">13</td><td class="bf-c-org">19 sec</td><td class="bf-c-org">2 mois</td><td class="bf-c-yel">1 000 ans</td><td class="bf-c-yel">12 000 ans</td><td class="bf-c-crm">202 000 ans</td></tr>
+            <tr><td class="bf-c-num">14</td><td class="bf-c-org">3 min</td><td class="bf-c-yel">4 ans</td><td class="bf-c-yel">64 000 ans</td><td class="bf-c-crm">750 000 ans</td><td class="bf-c-crm">16 M d'ans</td></tr>
+            <tr><td class="bf-c-num">15</td><td class="bf-c-org">32 min</td><td class="bf-c-yel">100 ans</td><td class="bf-c-crm">3 M d'ans</td><td class="bf-c-crm">46 M d'ans</td><td class="bf-c-crm">1 Md d'ans</td></tr>
+            <tr><td class="bf-c-num">16</td><td class="bf-c-org">5 heures</td><td class="bf-c-yel">3 000 ans</td><td class="bf-c-crm">173 M d'ans</td><td class="bf-c-crm">3 Md d'ans</td><td class="bf-c-grn">92 Md d'ans</td></tr>
+            <tr><td class="bf-c-num">17</td><td class="bf-c-org">2 jours</td><td class="bf-c-yel">69 000 ans</td><td class="bf-c-crm">9 Md d'ans</td><td class="bf-c-grn">179 Md d'ans</td><td class="bf-c-grn">7 000 Md d'ans</td></tr>
+            <tr><td class="bf-c-num">18</td><td class="bf-c-org">3 semaines</td><td class="bf-c-crm">2 M d'ans</td><td class="bf-c-grn">467 Md d'ans</td><td class="bf-c-grn">11 000 Md d'ans</td><td class="bf-c-grn">438 000 Md d'ans</td></tr>
+          </tbody>
+        </table>
+      </div>
+    `;
+
+    const questions = [
+      {
+        shortTitle: "Création d'un bon mot de passe",
+        question: "Que faut-il faire pour créer un bon mot de passe ?",
+        multi: true,
+        options: [
+          { text: "Mettre peu de caractères (pour s'en souvenir plus facilement)", correct: false },
+          { text: "Mettre au moins une minuscule, une majuscule, un chiffre et un caractère spécial", correct: true },
+          { text: "Utiliser un gestionnaire de mot de passe", correct: true },
+          { text: "Combiner plusieurs informations personnelles", correct: false }
+        ],
+        explanationHtml: `
+          <p>Un bon mot de passe est toujours composé de minuscules, majuscules, chiffres et caractères spéciaux et doit impérativement disposer d'un <strong>minimum de 11 caractères</strong>.</p>
+          <p>Il existe des services à la demande de cracking de mots de passe qui peuvent tourner des années durant ; une fois le mot de passe trouvé, un mail est envoyé au client pour lui donner accès au résultat.</p>
+          <p>De ce fait, le <strong>gestionnaire de mots de passe</strong> reste la meilleure alternative pour complexifier, sécuriser et disposer de ses mots de passe quand on le souhaite. Néanmoins, il est indispensable que le <strong>mot de passe maître</strong> soit d'une robustesse sans faille !</p>
+          ${bruteForceTableHtml}
+        `
+      },
+      {
+        shortTitle: "Code PIN le plus sécurisé",
+        question: "Quel est le code PIN le plus sécurisé ?",
+        multi: false,
+        options: [
+          { text: "9726 : code aléatoire", correct: true },
+          { text: "6589 : dates de naissance de mon père et de mon frère", correct: false },
+          { text: "2345", correct: false },
+          { text: "1809 : combinaison de plusieurs informations personnelles", correct: false }
+        ],
+        explanationHtml: `
+          <p>Un bon code PIN est composé d'un ensemble de chiffres qui ne correspondent en rien à une donnée pouvant permettre l'identification partielle du propriétaire. De plus, il est indispensable de ne pas répéter les chiffres ou constituer une suite.</p>
+          <p>La meilleure option est donc d'apprendre par cœur un <strong>code aléatoire</strong>.</p>
+        `
+      },
+      {
+        shortTitle: "Données sur téléphone sans carte SIM",
+        question: "Peut-on accéder à des messages, photos et documents sur un téléphone qui n'a pas de carte SIM ?",
+        multi: false,
+        options: [
+          { text: "Oui", correct: true },
+          { text: "Non", correct: false }
+        ],
+        explanationHtml: `
+          <p><strong>Bien entendu !</strong> La carte SIM joue le rôle d'intermédiaire entre le smartphone et l'opérateur de télécommunication. À quelques exceptions près, le stockage de données s'effectue dans la mémoire interne du smartphone et sur une carte SD / micro-SD.</p>
+        `
+      },
+      {
+        shortTitle: "Informations personnelles sur les réseaux sociaux",
+        question: "Sur les réseaux sociaux, où une personne n'étant pas dans mes contacts peut-elle trouver des informations personnelles me concernant ?",
+        multi: true,
+        options: [
+          { text: "Dans mon profil, si celui-ci est public", correct: true },
+          { text: "Dans mon profil, si celui-ci est privé", correct: false },
+          { text: "Dans mes publications (messages, photos, commentaires sur les publications de tiers, etc.)", correct: true },
+          { text: "Lorsque je réagis à une publication (un « j'aime », un « cœur », etc.)", correct: true }
+        ],
+        explanationHtml: `
+          <p>Les informations personnelles sur une personne n'étant pas dans nos amis sont facilement trouvables sur son <strong>profil public</strong>. Dans le cas où il est privé, seuls les amis voire les « amis des amis » pourront les consulter.</p>
+          <p>D'un point de vue RGPD, les données à caractère personnel se situent également dans les publications et réactions. Une photo, un commentaire, un message ou la publication d'un tiers peuvent permettre l'identification d'une personne par <strong>recoupement d'informations</strong>.</p>
+          <p><em>Exemple :</em> il est difficile d'identifier quelqu'un dont on sait seulement qu'il habite à Meudon-la-Forêt. En revanche, si l'on sait qu'il est allé au lycée Jules Verne, fête ses 28 ans le 20 octobre, n'aime pas le fromage et a passé son mois d'août à Saint-Tropez, il devient tout de suite beaucoup plus simple de le retrouver !</p>
+        `
+      },
+      {
+        shortTitle: "Informations sensibles dans un bureau",
+        question: "Dans un bureau, où peut-on trouver des informations sensibles (personnelles ou professionnelles) ?",
+        multi: true,
+        options: [
+          { text: "Sur les murs, meubles et papiers volants", correct: true },
+          { text: "Dans la corbeille à papier", correct: true },
+          { text: "Dans les poches de manteau et de sac", correct: true },
+          { text: "Sur l'ordinateur", correct: true }
+        ],
+        explanationHtml: `
+          <p>Des informations sensibles peuvent être un nom, un prénom, une adresse mail, un numéro de téléphone, une photo, un relevé d'identité bancaire, une Carte Vitale, etc. Tout dépend du contexte !</p>
+          <p>On peut donc retrouver ce type d'information <strong>partout</strong> : sur un mur (photo, post-it), sur un meuble (papier volant, facture, devis), dans la corbeille à papier, dans les vêtements (portefeuille, carte de visite), sur l'ordinateur, etc.</p>
+        `
+      },
+      {
+        shortTitle: "Sécuriser son bureau lors d'une absence",
+        question: "Afin d'éviter qu'une personne malintentionnée puisse récupérer des informations sensibles (personnelles ou professionnelles) sur mon bureau lorsque je m'absente, il est conseillé de :",
+        multi: true,
+        options: [
+          { text: "Ranger les informations sensibles dans un tiroir", correct: false },
+          { text: "Verrouiller ma session d'ordinateur (touche Windows + L)", correct: true },
+          { text: "Débrancher le câble réseau de mon ordinateur", correct: false },
+          { text: "Ranger les informations sensibles dans un espace verrouillé", correct: true },
+          { text: "Emmener avec moi les informations sensibles, si je ne peux pas faire autrement", correct: true },
+          { text: "Verrouiller la porte de mon bureau", correct: true }
+        ],
+        explanationHtml: `
+          <p>Lorsque l'on quitte son bureau, même pour quelques minutes, il est indispensable de protéger toute information personnelle ou sensible. Il ne faut que quelques secondes à quelqu'un qui passe pour la dérober.</p>
+          <ul>
+            <li><strong>Verrouiller sa session</strong> est indispensable : pensez au raccourci <strong>Windows + L</strong>.</li>
+            <li><strong>Débrancher le câble réseau</strong> est excessif et n'est pas la solution pertinente.</li>
+            <li><strong>Ranger tout papier volant</strong> dans un tiroir ou une armoire <strong>verrouillé(e) par clef ou cadenas</strong> est une bonne pratique (un simple tiroir non fermé ne suffit pas).</li>
+            <li><strong>Emmener les informations sensibles avec soi</strong> : oui, dans la limite du raisonnable si l'on ne dispose pas d'un espace fermé.</li>
+            <li><strong>Verrouiller la porte du bureau</strong> : c'est une double sécurité, qui ne dispense pas des autres mesures.</li>
+            <li><strong>Attention au message d'absence sur la porte :</strong> c'est une mauvaise habitude qui indique clairement que personne ne surveille les lieux (comme laisser un mot « je reviens demain à 10h » sur le pare-brise de sa voiture).</li>
+          </ul>
+        `
+      },
+      {
+        shortTitle: "Réception d'un mail avec pièce jointe",
+        question: "Lorsque je reçois un mail contenant une pièce jointe, je dois :",
+        multi: true,
+        options: [
+          { text: "Ouvrir de suite la pièce jointe pour en prendre connaissance", correct: false },
+          { text: "Supprimer immédiatement le mail", correct: false },
+          { text: "Prévenir ma hiérarchie", correct: false },
+          { text: "Vérifier l'expéditeur du mail en survolant ou en cliquant sur l'adresse mail de ce dernier", correct: true },
+          { text: "En cas de doute, contacter l'équipe responsable de la sécurité informatique avant de faire quoi que ce soit", correct: true },
+          { text: "Vérifier la légitimité du contenu du mail", correct: true }
+        ],
+        explanationHtml: `
+          <p>Plus des trois-quarts des attaques en entreprise utilisent le vecteur humain : c'est le <strong>social engineering</strong> (ingénierie sociale), qui vise à amener une personne à exécuter une action à la place du pirate.</p>
+          <p>Face à une pièce jointe inattendue ou accrocheuse (ex. <em>« exclu_macron_accident.mp4 »</em>), posez-vous en quelques secondes ces questions :</p>
+          <ul>
+            <li>Qui est l'émetteur réel du mail (en survolant le nom pour voir l'adresse complète) ?</li>
+            <li>L'adresse est-elle officielle (pas de caractère en double ou en moins) ?</li>
+            <li>Est-ce que je connais l'expéditeur et y a-t-il une raison valable pour que je sois destinataire ?</li>
+            <li>Le contexte et le nom de la pièce jointe visent-ils uniquement à piquer ma curiosité pour me faire cliquer ?</li>
+          </ul>
+          <p>En cas de doute, contactez l'équipe sécurité informatique en précisant clairement dans l'objet du transfert que le courrier est potentiellement dangereux.</p>
+        `
+      },
+      {
+        shortTitle: "Signes d'un mail frauduleux (phishing)",
+        question: "Quels sont les signes pouvant laisser supposer qu'un mail est frauduleux (ex : phishing) ?",
+        multi: true,
+        options: [
+          { text: "Le mail contient un lien hypertexte ou une pièce jointe", correct: true },
+          { text: "L'expéditeur me demande de régler une facture pour un achat que je n'ai pas effectué", correct: true },
+          { text: "L'adresse de l'expéditeur (en survolant l'adresse mail avec la souris) ne correspond pas au nom indiqué (ex : La Poste)", correct: true },
+          { text: "Le mail est criblé de fautes d'orthographe, malgré la légitimité de l'expéditeur", correct: true },
+          { text: "Il y a certains de mes collègues parmi les autres destinataires", correct: false },
+          { text: "Le mail est arrivé dans mes courriers indésirables", correct: true }
+        ],
+        explanationHtml: `
+          <p>Un mail frauduleux peut apparaître sous plusieurs formes :</p>
+          <ul>
+            <li>Usurpation de la mise en page et du contenu d'un service fiable ;</li>
+            <li>Présence de liens hypertextes ou d'une ou plusieurs pièces jointes ;</li>
+            <li>Pertinence non avérée (colis non commandé, facture sans achat préalable, etc.) ;</li>
+            <li>Nombreuses fautes d'orthographe ou de langue ;</li>
+            <li>Caractère d'urgence (vitale, financière, professionnelle, juridique) ;</li>
+            <li>Arrivée dans les courriers indésirables ;</li>
+            <li>Adresse d'expédition incohérente avec le nom affiché (ex : <em>La Poste</em> mais <code>dqsmnqlfdhjsd@xyz.com</code>).</li>
+          </ul>
+        `
+      },
+      {
+        shortTitle: "Vecteurs de transmission d'un ransomware",
+        question: "Un ransomware peut se transmettre via :",
+        multi: true,
+        options: [
+          { text: "Un fichier Word envoyé par la messagerie interne à l'entreprise", correct: true },
+          { text: "Un fichier envoyé par un collègue de bureau", correct: true },
+          { text: "Une conversation téléphonique avec un inconnu", correct: false },
+          { text: "Le réseau interne à l'entreprise", correct: true },
+          { text: "Un magasin d'applications officiel", correct: true },
+          { text: "Une clef USB trouvée dans le couloir du réfectoire", correct: true }
+        ],
+        explanationHtml: `
+          <p>Un ransomware n'est autre qu'un <strong>malware</strong>, et un malware peut se transmettre de n'importe quelle manière — <strong>à l'exception d'un simple appel téléphonique</strong> !</p>
+          <p>SMS, store officiel, clef USB, réseau interne, navigation Internet, collaborateurs déjà infectés, fichiers PDF ou Word (DOCX), etc. : tous ces vecteurs peuvent transmettre un rançongiciel.</p>
+        `
+      },
+      {
+        shortTitle: "Menaces informatiques en entreprise",
+        question: "Quelles sont les menaces informatiques en entreprise parmi les propositions suivantes ?",
+        multi: true,
+        options: [
+          { text: "Le ransomware", correct: true },
+          { text: "L'utilisation de Windows 7", correct: true },
+          { text: "L'utilisation de Windows 8", correct: true },
+          { text: "L'utilisation de Windows 11", correct: false },
+          { text: "Les salariés non formés aux risques informatiques", correct: true },
+          { text: "Le phishing", correct: true },
+          { text: "Le matériel personnel utilisé en entreprise", correct: true }
+        ],
+        explanationHtml: `
+          <p>Le <strong>ransomware</strong> et le <strong>phishing</strong> sont les deux types d'attaques les plus courantes et dévastatrices.</p>
+          <p>Concernant Windows, <strong>Windows 11</strong> est maintenu et reçoit rapidement les correctifs de sécurité de Microsoft. En revanche, les versions obsolètes (Windows 8.1, 8, 7, XP, etc.) ne reçoivent plus aucun patch : toute faille découverte reste exploitable indéfiniment par les pirates.</p>
+          <p>Enfin, les <strong>salariés non formés aux risques informatiques</strong> ainsi que le <strong>matériel personnel utilisé en entreprise</strong> constituent également des menaces bien réelles.</p>
+        `
+      }
+    ];
+
+    let currentIdx = 0;
+    let totalScore = 0;
+    let selectedIndices = new Set();
+    let resultsHistory = [];
+    let isLocked = false;
+
+    const qCounter = document.getElementById('q-counter');
+    const qScore = document.getElementById('q-score');
+    const progressFill = document.getElementById('progress-fill');
+    const qBadge = document.getElementById('q-badge');
+    const qTitle = document.getElementById('q-title');
+    const optionsList = document.getElementById('options-list');
+    const feedbackBox = document.getElementById('feedback-box');
+    const fbTitle = document.getElementById('fb-title');
+    const fbPts = document.getElementById('fb-pts');
+    const fbBody = document.getElementById('fb-body');
+    const btnValidate = document.getElementById('btn-validate');
+    const btnNext = document.getElementById('btn-next');
+
+    function formatPts(n) {
+      const rounded = Math.round(n * 100) / 100;
+      return rounded.toString().replace('.', ',');
+    }
+
+    function renderQuestion() {
+      const q = questions[currentIdx];
+      selectedIndices.clear();
+      isLocked = false;
+
+      qCounter.textContent = `Question ${currentIdx + 1} / ${questions.length}`;
+      qScore.textContent = `Score : ${formatPts(totalScore)} / ${questions.length}`;
+      progressFill.style.width = `${(currentIdx / questions.length) * 100}%`;
+
+      if (q.multi) {
+        qBadge.className = 'q-type-badge multi';
+        qBadge.textContent = '☑ Plusieurs réponses possibles';
+      } else {
+        qBadge.className = 'q-type-badge single';
+        qBadge.textContent = '◉ Une seule réponse attendue';
+      }
+      qTitle.textContent = q.question;
+
+      optionsList.innerHTML = '';
+      q.options.forEach((opt, idx) => {
+        const div = document.createElement('div');
+        div.className = 'option-item' + (q.multi ? '' : ' single-mode');
+        div.dataset.idx = idx;
+        div.innerHTML = `
+          <div class="opt-box"></div>
+          <div class="opt-content">${opt.text}</div>
+        `;
+        div.addEventListener('click', () => toggleOption(idx));
+        optionsList.appendChild(div);
+      });
+
+      feedbackBox.style.display = 'none';
+      btnValidate.style.display = 'block';
+      btnValidate.disabled = true;
+      btnNext.style.display = 'none';
+    }
+
+    function toggleOption(idx) {
+      if (isLocked) return;
+      const q = questions[currentIdx];
+      if (!q.multi) {
+        selectedIndices.clear();
+        selectedIndices.add(idx);
+      } else {
+        if (selectedIndices.has(idx)) selectedIndices.delete(idx);
+        else selectedIndices.add(idx);
+      }
+
+      const items = optionsList.querySelectorAll('.option-item');
+      items.forEach((el, i) => {
+        const box = el.querySelector('.opt-box');
+        if (selectedIndices.has(i)) {
+          el.classList.add('selected');
+          box.textContent = q.multi ? '✓' : '●';
+        } else {
+          el.classList.remove('selected');
+          box.textContent = '';
+        }
+      });
+
+      btnValidate.disabled = selectedIndices.size === 0;
+    }
+
+    function validateQuestion() {
+      if (isLocked || selectedIndices.size === 0) return;
+      isLocked = true;
+
+      const q = questions[currentIdx];
+      const totalCorrect = q.options.filter(o => o.correct).length;
+      let goodChecked = 0;
+      let wrongChecked = 0;
+
+      const items = optionsList.querySelectorAll('.option-item');
+      items.forEach((el, i) => {
+        el.classList.add('locked');
+        el.classList.remove('selected');
+        const box = el.querySelector('.opt-box');
+        const content = el.querySelector('.opt-content');
+        const isSelected = selectedIndices.has(i);
+        const isCorrect = q.options[i].correct;
+
+        if (isCorrect && isSelected) {
+          goodChecked++;
+          el.classList.add('res-correct');
+          box.textContent = '✓';
+          content.innerHTML += `<br><span class="opt-tag tag-ok">✓ Bonne réponse</span>`;
+        } else if (isCorrect && !isSelected) {
+          el.classList.add('res-missed');
+          box.textContent = '!';
+          content.innerHTML += `<br><span class="opt-tag tag-miss">Attendue (oubliée)</span>`;
+        } else if (!isCorrect && isSelected) {
+          wrongChecked++;
+          el.classList.add('res-wrong');
+          box.textContent = '✕';
+          content.innerHTML += `<br><span class="opt-tag tag-bad">✕ Mauvais choix</span>`;
+        } else {
+          el.classList.add('res-neutral');
+          box.textContent = '';
+        }
+      });
+
+      // Calcul du score partiel sur 1 point par question
+      let pts = 0;
+      if (!q.multi) {
+        pts = (goodChecked === 1 && wrongChecked === 0) ? 1 : 0;
+      } else {
+        const gainPerGood = 1 / totalCorrect;
+        const penaltyPerWrong = Math.max(gainPerGood, 0.25);
+        pts = (goodChecked * gainPerGood) - (wrongChecked * penaltyPerWrong);
+        pts = Math.max(0, Math.min(1, Math.round(pts * 100) / 100));
+      }
+
+      totalScore = Math.round((totalScore + pts) * 100) / 100;
+      resultsHistory.push({
+        num: currentIdx + 1,
+        shortTitle: q.shortTitle,
+        pts: pts,
+        perfect: (goodChecked === totalCorrect && wrongChecked === 0)
+      });
+
+      qScore.textContent = `Score : ${formatPts(totalScore)} / ${questions.length}`;
+
+      // Affichage du débriefing
+      if (goodChecked === totalCorrect && wrongChecked === 0) {
+        feedbackBox.className = 'feedback-box perfect';
+        fbTitle.textContent = '✅ Parfait ! Toutes les bonnes réponses ont été trouvées.';
+      } else if (pts > 0) {
+        feedbackBox.className = 'feedback-box partial';
+        fbTitle.textContent = '🟡 Presque ! Réponse partiellement juste.';
+      } else {
+        feedbackBox.className = 'feedback-box wrong';
+        fbTitle.textContent = '❌ Dommage ! Voici les explications à retenir.';
+      }
+
+      fbPts.textContent = `+${formatPts(pts)} / 1 pt`;
+      fbBody.innerHTML = q.explanationHtml;
+      feedbackBox.style.display = 'block';
+
+      btnValidate.style.display = 'none';
+      btnNext.textContent = (currentIdx === questions.length - 1) ? 'Voir mon score final 🏆' : 'Question suivante ➔';
+      btnNext.style.display = 'block';
+    }
+
+    function nextQuestion() {
+      currentIdx++;
+      if (currentIdx < questions.length) {
+        renderQuestion();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } else {
+        showFinal();
+      }
+    }
+
+    function showFinal() {
+      document.getElementById('quiz-view').style.display = 'none';
+      document.getElementById('final-view').style.display = 'block';
+
+      const pct = Math.round((totalScore / questions.length) * 100);
+      document.getElementById('final-score').textContent = `${formatPts(totalScore)} / ${questions.length}`;
+      document.getElementById('final-pct').textContent = `${pct} % de réussite`;
+
+      let emoji, rank, msg;
+      if (pct >= 85) {
+        emoji = '🛡️';
+        rank = 'Expert Cybersécurité';
+        msg = "Excellent score ! Vous maîtrisez les bons réflexes numériques au bureau comme dans la vie quotidienne.";
+      } else if (pct >= 60) {
+        emoji = '🔎';
+        rank = 'Utilisateur Vigilant';
+        msg = "Bon résultat ! Vous avez déjà de solides bases, mais quelques subtilités méritent encore un peu d'attention.";
+      } else {
+        emoji = '🎯';
+        rank = 'Apprenti Cyber (en progression !)';
+        msg = "Ce quizz a permis de mettre le doigt sur plusieurs pièges classiques. N'hésitez pas à rejouer pour ancrer tous les réflexes !";
+      }
+
+      document.getElementById('final-emoji').textContent = emoji;
+      document.getElementById('final-rank').textContent = rank;
+      document.getElementById('final-msg').textContent = msg;
+
+      const sumList = document.getElementById('summary-list');
+      sumList.innerHTML = resultsHistory.map(r => {
+        const cls = r.perfect ? 'ok' : (r.pts > 0 ? 'mid' : 'bad');
+        const icon = r.perfect ? '✅' : (r.pts > 0 ? '🟡' : '❌');
+        return `
+          <div class="sum-row">
+            <span class="sum-q">${icon} <strong>Q${r.num}.</strong> ${r.shortTitle}</span>
+            <span class="sum-pts ${cls}">${formatPts(r.pts)} / 1</span>
+          </div>
+        `;
+      }).join('');
+
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function restartQuiz() {
+      currentIdx = 0;
+      totalScore = 0;
+      resultsHistory = [];
+      document.getElementById('final-view').style.display = 'none';
+      document.getElementById('quiz-view').style.display = 'block';
+      renderQuestion();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    btnValidate.addEventListener('click', validateQuestion);
+    btnNext.addEventListener('click', nextQuestion);
+    document.getElementById('btn-replay').addEventListener('click', restartQuiz);
+
+    renderQuestion();
+  </script>
+</body>
+</html>
